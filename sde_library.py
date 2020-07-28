@@ -2,7 +2,7 @@
 """
 Created on Thu May 14 12:35:08 2020
 
-@author: Erich & Dr. J
+@author: Erich
 """
 
 import numpy as np
@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from os import chdir
 from statsmodels.tsa.stattools import acf, pacf
-chdir('E:\SDEgithub')
+## C:\Users\Erich\Documents\Python\SDE\sde_library
+chdir('C:/Users/Computer/Documents/SDE')
 
 ###############################################################################
 def ou_path(mu,alpha,sigma,dt,n,x0):
@@ -160,6 +161,12 @@ def cir_path(mu,alpha,sigma,dt,n,x0):
                nc_coeff = c*exp(-alpha*dt)
     """
     ## 
+    if mu <= 0 or alpha <= 0 or sigma <= 0 :
+        print('ERROR cir_path, parameter < = 0')
+        return -1
+    if 2*mu*alpha < sigma**2:
+        print("ERROR cir_path, 2(mu x alpha) < sigma**2")
+        return -2
     ncx2 = scipy.stats.ncx2
     x = np.zeros(n);
     x[0] = x0;
@@ -229,13 +236,10 @@ def ll_cir(theta, yt, dt, sign=1.0):
 ###############################################################################
        
     
-    
-
 
 ###############################################################################
 def cir_fit(yt,dt,quantile=None):
     """
-    Cox-Ingersoll-Ross
     MLE fit of parameters (theta = (mu,alpha,sigma)) for a CIR process
     Given observation sequence yt and constant time-between-observations of dt.
     
@@ -417,8 +421,6 @@ class cir_asymptotic:
     def ppf(self,q):
         return(scipy.stats.gamma(a=self._a,scale=self._scale).ppf(q));
 ###############################################################################
-        
-
 
 
 def ll_ensemble_cir(theta, yt, dt, sign=1.0):
@@ -426,8 +428,7 @@ def ll_ensemble_cir(theta, yt, dt, sign=1.0):
         "ensemble" meanin yt can be one or more time series realizations.
         
     """
-    
-    
+      
     return(-1);
 
 
@@ -444,7 +445,7 @@ def ll_ensemble_cir(theta, yt, dt, sign=1.0):
 
 # [plt.plot(temp,'.-') for temp in X]
 
-def ouMLEfit(x, dt=1):
+def ouMLEfit(x, dt=1, verbose=False):
     '''
     Maximum likelihood OU fit, based on
     1. MLE estimates of AR(1) parameters of x
@@ -480,15 +481,17 @@ def ouMLEfit(x, dt=1):
 
     # fit model
     
-    print(result.summary())
+    if (verbose):
+        print(result.summary())
 
     mu,b = result.params
 
     k =  np.sqrt(-np.log(b)/dt)  
+    a = (1-np.exp(-k*dt))*mu
     se = np.std(result.resid)
     sigma = se*np.sqrt((1-2*np.log(b))/((1-b**2)*dt))
-    
-    return (k,mu,sigma)
+   
+    return (mu, k, sigma)
 
 def ouDistn(X0, T, k, mu, sigma):
     '''
